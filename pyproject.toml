@@ -1,0 +1,52 @@
+[project]
+name = "observatory"
+version = "0.1.0"
+description = "A production-grade data quality and observability framework"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.4.3",
+    "pandas>=2.3.3",
+    "plotly>=6.5.2",
+    "pyarrow>=22.0.0",
+    "pydantic>=2.12.5",
+    "pyyaml>=6.0.3",
+    "rich>=14.2.0",
+    "streamlit>=1.53.0",
+    "typer>=0.21.1",
+]
+
+[project.scripts]
+observatory = "observatory.cli:main"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.13",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["observatory*"]
