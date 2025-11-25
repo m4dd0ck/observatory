@@ -1,0 +1,39 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data files (keep examples)
+*.parquet
+*.csv
+data/
+!data/.gitkeep
+
+# DuckDB databases
+*.db
+*.duckdb
+
+# Misc
+.DS_Store
+*.log
+.env
+.envrc
