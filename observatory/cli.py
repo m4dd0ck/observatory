@@ -93,6 +93,7 @@ def run_checks(
     """
     try:
         # load settings, override db path if provided
+        # FIXME: should probably validate config file schema before running
         settings = ObservatorySettings()
         if db:
             settings.results_database = db
