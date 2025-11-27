@@ -1,0 +1,154 @@
+# NYC Taxi Data Quality Checks
+# Validates the NYC Yellow Taxi trip data for common quality issues
+
+name: nyc_taxi_quality
+description: Data quality checks for NYC Yellow Taxi trip data
+tags:
+  - transportation
+  - nyc
+  - taxi
+owner: data-team
+
+source:
+  type: parquet
+  path: data/yellow_tripdata_2024-01.parquet
+
+checks:
+  # Schema Validation
+  - name: required_columns_present
+    type: schema
+    severity: critical
+    columns:
+      - name: VendorID
+        dtype: INTEGER
+      - name: tpep_pickup_datetime
+        dtype: TIMESTAMP
+      - name: tpep_dropoff_datetime
+        dtype: TIMESTAMP
+      - name: passenger_count
+        dtype: BIGINT
+      - name: trip_distance
+        dtype: DOUBLE
+      - name: fare_amount
+        dtype: DOUBLE
+      - name: total_amount
+        dtype: DOUBLE
+
+  # Completeness Checks
+  - name: vendor_id_not_null
+    type: completeness
+    column: VendorID
+    threshold: 0.01
+    severity: warning
+
+  - name: pickup_datetime_not_null
+    type: completeness
+    column: tpep_pickup_datetime
+    threshold: 0.0
+    severity: critical
+
+  - name: passenger_count_completeness
+    type: completeness
+    column: passenger_count
+    threshold: 0.05
+    severity: warning
+
+  # Validity Checks - Ranges
+  - name: fare_amount_non_negative
+    type: range
+    column: fare_amount
+    min: 0
+    threshold: 0.001
+    severity: critical
+
+  - name: fare_amount_reasonable
+    type: range
+    column: fare_amount
+    min: 0
+    max: 500
+    threshold: 0.01
+    severity: warning
+
+  - name: trip_distance_valid
+    type: range
+    column: trip_distance
+    min: 0
+    max: 200
+    threshold: 0.01
+    severity: warning
+
+  - name: passenger_count_reasonable
+    type: range
+    column: passenger_count
+    min: 0
+    max: 8
+    threshold: 0.01
+    severity: warning
+
+  - name: total_amount_positive
+    type: range
+    column: total_amount
+    min: 0
+    threshold: 0.01
+    severity: warning
+
+  # Validity Checks - Allowed Values
+  - name: valid_vendor_id
+    type: allowed_values
+    column: VendorID
+    allowed_values: [1, 2]
+    threshold: 0.01
+    severity: warning
+
+  - name: valid_payment_type
+    type: allowed_values
+    column: payment_type
+    allowed_values: [1, 2, 3, 4, 5, 6]
+    threshold: 0.01
+    severity: warning
+
+  - name: valid_rate_code
+    type: allowed_values
+    column: RatecodeID
+    allowed_values: [1, 2, 3, 4, 5, 6, 99]
+    threshold: 0.01
+    severity: warning
+
+  # Uniqueness Check (trip should be unique based on key fields)
+  - name: no_exact_duplicates
+    type: uniqueness
+    columns:
+      - VendorID
+      - tpep_pickup_datetime
+      - tpep_dropoff_datetime
+      - PULocationID
+      - DOLocationID
+    threshold: 0.001
+    severity: warning
+
+  # Custom SQL Checks
+  - name: dropoff_after_pickup
+    type: custom_sql
+    severity: warning
+    threshold: 0.01
+    query: |
+      SELECT COUNT(*) as failures
+      FROM {table}
+      WHERE tpep_dropoff_datetime < tpep_pickup_datetime
+
+  - name: pickup_in_january_2024
+    type: custom_sql
+    severity: warning
+    threshold: 0.01
+    query: |
+      SELECT COUNT(*) as failures
+      FROM {table}
+      WHERE tpep_pickup_datetime < '2024-01-01'
+         OR tpep_pickup_datetime >= '2024-02-01'
+
+  # Freshness Check (for demonstration - check if data is recent)
+  - name: data_freshness
+    type: freshness
+    column: tpep_pickup_datetime
+    max_age_hours: 8760  # 365 days - since this is historical data
+    severity: info
