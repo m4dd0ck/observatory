@@ -110,7 +110,10 @@ class UniquenessCheck(BaseCheck):
                 severity=severity,
                 metric_value=duplicates,
                 threshold=int(threshold * total_rows) if total_rows > 0 else 0,
-                message=f"Found {duplicates:,} duplicate rows ({duplicate_rate:.2%}) for '{column_display}'",
+                message=(
+                    f"Found {duplicates:,} duplicate rows ({duplicate_rate:.2%}) "
+                    f"for '{column_display}'"
+                ),
                 details={
                     "column": column_display,
                     "columns": columns,

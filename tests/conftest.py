@@ -1,9 +1,10 @@
 """Shared test fixtures."""
 
-import pytest
-import duckdb
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import duckdb
+import pytest
 
 
 @pytest.fixture

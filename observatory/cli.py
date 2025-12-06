@@ -5,7 +5,7 @@
 
 import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -59,7 +59,7 @@ def run_checks(
         ),
     ],
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output", "-o",
             help="Path to write JSON output",
@@ -80,7 +80,7 @@ def run_checks(
         ),
     ] = False,
     db: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--db",
             help="Path to results database",
@@ -129,7 +129,7 @@ def run_checks(
 @app.command("history")
 def show_history(
     suite: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--suite", "-s",
             help="Filter by suite name",
@@ -143,7 +143,7 @@ def show_history(
         ),
     ] = 10,
     db: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--db",
             help="Path to results database",
@@ -207,8 +207,9 @@ def list_check_types() -> None:
     handy reference for what checks you can use in your yaml config
     """
     # lazy imports keep cli snappy
-    from observatory.checks.registry import get_default_registry
     from rich.table import Table
+
+    from observatory.checks.registry import get_default_registry
 
     registry = get_default_registry()
     check_types = registry.list_types()
@@ -237,7 +238,7 @@ def list_check_types() -> None:
 @app.command("dashboard")
 def launch_dashboard(
     db: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--db",
             help="Path to results database",

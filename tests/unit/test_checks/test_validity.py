@@ -2,7 +2,7 @@
 
 import pytest
 
-from observatory.checks.validity import RangeCheck, AllowedValuesCheck, CustomSQLCheck
+from observatory.checks.validity import AllowedValuesCheck, CustomSQLCheck, RangeCheck
 
 
 class TestRangeCheck:

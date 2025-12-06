@@ -91,7 +91,10 @@ class CompletenessCheck(BaseCheck):
                     severity=severity,
                     metric_value=null_count,
                     threshold=int(threshold * total_rows),
-                    message=f"Column '{column}' has {null_count:,} null values ({null_rate:.2%}), exceeds threshold of {threshold:.2%}",
+                    message=(
+                        f"Column '{column}' has {null_count:,} null values "
+                        f"({null_rate:.2%}), exceeds threshold of {threshold:.2%}"
+                    ),
                     details={
                         "column": column,
                         "total_rows": total_rows,

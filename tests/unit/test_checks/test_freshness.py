@@ -1,9 +1,9 @@
 """Tests for freshness checks."""
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import duckdb
+import pytest
 
 from observatory.checks.freshness import FreshnessCheck
 
@@ -12,7 +12,7 @@ from observatory.checks.freshness import FreshnessCheck
 def recent_data_db():
     """Database with recent timestamps."""
     conn = duckdb.connect(":memory:")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     recent = now - timedelta(hours=1)
     old = now - timedelta(hours=48)
 
@@ -30,7 +30,7 @@ def recent_data_db():
 def stale_data_db():
     """Database with old timestamps."""
     conn = duckdb.connect(":memory:")
-    old = datetime.now(timezone.utc) - timedelta(days=30)
+    old = datetime.now(UTC) - timedelta(days=30)
 
     conn.execute(f"""
         CREATE TABLE test_data AS

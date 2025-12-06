@@ -1,7 +1,7 @@
 """Freshness checks for data staleness detection."""
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import duckdb
@@ -73,7 +73,7 @@ class FreshnessCheck(BaseCheck):
                 )
 
             # calculate age - now minus most recent timestamp
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # handle different timestamp formats - duckdb can return strings
             # or datetime objects depending on the column type
@@ -91,7 +91,7 @@ class FreshnessCheck(BaseCheck):
             # make timestamp timezone-aware if needed - assume UTC
             # this has bitten me before when comparing tz-aware and naive datetimes
             if max_timestamp.tzinfo is None:
-                max_timestamp = max_timestamp.replace(tzinfo=timezone.utc)
+                max_timestamp = max_timestamp.replace(tzinfo=UTC)
 
             age = now - max_timestamp
             age_hours = age.total_seconds() / 3600

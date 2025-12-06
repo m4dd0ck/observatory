@@ -1,6 +1,6 @@
 """Main Observatory class - the entry point for running data quality checks."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +64,7 @@ class Observatory:
         Returns:
             RunResult with all check results.
         """
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         check_results: list[CheckResult] = []
 
         # Connect to data source
@@ -96,7 +96,7 @@ class Observatory:
                     )
                 )
 
-        completed_at = datetime.now(timezone.utc)
+        completed_at = datetime.now(UTC)
         duration = (completed_at - started_at).total_seconds()
 
         run_result = RunResult(
