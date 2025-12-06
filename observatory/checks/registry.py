@@ -15,7 +15,7 @@ class CheckRegistry:
     """
 
     def __init__(self) -> None:
-        self._checks: dict[str, type["BaseCheck"]] = {}
+        self._checks: dict[str, type[BaseCheck]] = {}
 
     def register(self, check_class: type["BaseCheck"]) -> type["BaseCheck"]:
         """Register a check class.
@@ -72,15 +72,15 @@ def get_default_registry() -> CheckRegistry:
         _default_registry = CheckRegistry()
         # Import and register all built-in checks
         # gotta import here to avoid circular import hell
-        from observatory.checks.schema import SchemaCheck
         from observatory.checks.completeness import CompletenessCheck
+        from observatory.checks.freshness import FreshnessCheck
+        from observatory.checks.schema import SchemaCheck
+        from observatory.checks.uniqueness import UniquenessCheck
         from observatory.checks.validity import (
-            RangeCheck,
             AllowedValuesCheck,
             CustomSQLCheck,
+            RangeCheck,
         )
-        from observatory.checks.uniqueness import UniquenessCheck
-        from observatory.checks.freshness import FreshnessCheck
 
         # register em all - order doesn't matter here
         _default_registry.register(SchemaCheck)

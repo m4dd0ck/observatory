@@ -102,7 +102,10 @@ class RangeCheck(BaseCheck):
                 severity=severity,
                 metric_value=failures,
                 threshold=int(threshold * non_null_rows) if non_null_rows > 0 else 0,
-                message=f"Found {failures:,} rows ({failure_rate:.2%}) outside range [{min_val}, {max_val}]",
+                message=(
+                    f"Found {failures:,} rows ({failure_rate:.2%}) "
+                    f"outside range [{min_val}, {max_val}]"
+                ),
                 details={
                     "column": column,
                     "min": min_val,
@@ -169,7 +172,9 @@ class AllowedValuesCheck(BaseCheck):
             query = f"""
                 SELECT
                     COUNT(*) as total_rows,
-                    COUNT(*) FILTER (WHERE {column} NOT IN ({values_str}) AND {column} IS NOT NULL) as failures,
+                    COUNT(*) FILTER (
+                        WHERE {column} NOT IN ({values_str}) AND {column} IS NOT NULL
+                    ) as failures,
                     COUNT(*) FILTER (WHERE {column} IS NULL) as nulls
                 FROM {table}
             """
@@ -220,7 +225,10 @@ class AllowedValuesCheck(BaseCheck):
                 severity=severity,
                 metric_value=failures,
                 threshold=int(threshold * non_null_rows) if non_null_rows > 0 else 0,
-                message=f"Found {failures:,} rows ({failure_rate:.2%}) with values not in allowed set",
+                message=(
+                    f"Found {failures:,} rows ({failure_rate:.2%}) "
+                    "with values not in allowed set"
+                ),
                 details={
                     "column": column,
                     "allowed_values": allowed_values,

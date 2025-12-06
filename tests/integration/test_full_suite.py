@@ -1,11 +1,10 @@
 """Integration tests for full check suite execution."""
 
+
 import pytest
-from pathlib import Path
-import tempfile
 
 from observatory import Observatory
-from observatory.models.config import CheckSuiteConfig, SourceConfig, CheckConfig
+from observatory.models.config import CheckConfig, CheckSuiteConfig, SourceConfig
 
 
 class TestFullSuite:
@@ -41,7 +40,7 @@ class TestFullSuite:
         import duckdb
 
         obs = Observatory(results_db=temp_dir / "results.db")
-        results = obs.run_suite(sample_config)
+        obs.run_suite(sample_config)
 
         # Query results database
         conn = duckdb.connect(str(temp_dir / "results.db"))

@@ -82,9 +82,14 @@ class SchemaCheck(BaseCheck):
                     sample_failures.append({"issue": "missing_column", "column": col_name})
             else:
                 # detailed column spec - check name, type, and nullability
-                col_name = expected.get("name", "") if isinstance(expected, dict) else expected.name
-                expected_dtype = expected.get("dtype") if isinstance(expected, dict) else getattr(expected, "dtype", None)
-                expected_nullable = expected.get("nullable", True) if isinstance(expected, dict) else getattr(expected, "nullable", True)
+                if isinstance(expected, dict):
+                    col_name = expected.get("name", "")
+                    expected_dtype = expected.get("dtype")
+                    expected_nullable = expected.get("nullable", True)
+                else:
+                    col_name = expected.name
+                    expected_dtype = getattr(expected, "dtype", None)
+                    expected_nullable = getattr(expected, "nullable", True)
 
                 if col_name not in actual_columns:
                     issues.append(f"Missing column: {col_name}")
@@ -106,7 +111,8 @@ class SchemaCheck(BaseCheck):
                     )
                     if not type_matches:
                         issues.append(
-                            f"Column '{col_name}' type mismatch: expected {expected_dtype}, got {actual['dtype']}"
+                            f"Column '{col_name}' type mismatch: "
+                            f"expected {expected_dtype}, got {actual['dtype']}"
                         )
                         sample_failures.append({
                             "issue": "type_mismatch",
@@ -137,7 +143,10 @@ class SchemaCheck(BaseCheck):
                 status="failed",
                 severity=severity,
                 metric_value=len(issues),
-                message=f"Schema validation failed with {len(issues)} issue(s): {'; '.join(issues[:3])}",
+                message=(
+                    f"Schema validation failed with {len(issues)} issue(s): "
+                    f"{'; '.join(issues[:3])}"
+                ),
                 details={
                     "issues": issues,
                     "expected_columns": len(expected_columns),

@@ -4,10 +4,10 @@
 # keeping configs separate from results felt cleaner
 
 from observatory.models.config import (
-    SourceConfig,
     CheckConfig,
     CheckSuiteConfig,
     ObservatorySettings,
+    SourceConfig,
 )
 from observatory.models.results import CheckResult, RunResult
 

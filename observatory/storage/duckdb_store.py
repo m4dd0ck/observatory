@@ -1,7 +1,7 @@
 """DuckDB storage for check results."""
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -253,7 +253,7 @@ class DuckDBStore:
         """
         conn = self._get_connection()
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
 
         # join to get timestamps from the run table
         # this is basically what great expectations does for their data docs
@@ -320,7 +320,7 @@ class DuckDBStore:
         """
         conn = self._get_connection()
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        cutoff = datetime.now(UTC) - timedelta(days=retention_days)
 
         # get run ids first so we can cascade delete properly
         # tried using foreign keys but duckdb's support was a bit wonky
