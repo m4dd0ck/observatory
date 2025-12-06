@@ -1,4 +1,4 @@
-"""Data Quality Observatory - A production-grade data quality framework."""
+"""Data quality checks for tables and files."""
 
 from observatory.main import Observatory
 from observatory.models.config import CheckConfig, CheckSuiteConfig, SourceConfig
