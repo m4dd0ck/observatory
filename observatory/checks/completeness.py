@@ -10,12 +10,7 @@ from observatory.models.results import CheckResult
 
 
 class CompletenessCheck(BaseCheck):
-    """Checks for null rates and missing value patterns.
-
-    this is probably the most commonly used check - null values creep in
-    everywhere and this catches them early. pretty standard pattern
-    but we added threshold support so you can allow some nulls if needed.
-    """
+    """Checks for null rates in a column."""
 
     check_type = "completeness"
 
@@ -37,8 +32,6 @@ class CompletenessCheck(BaseCheck):
         threshold = config.get("threshold", 0.0)  # max allowed null rate
 
         try:
-            # single query to get all the stats we need - duckdb is fast but
-            # no reason to make multiple round trips
             query = f"""
                 SELECT
                     COUNT(*) as total_rows,
@@ -66,8 +59,6 @@ class CompletenessCheck(BaseCheck):
 
             null_rate = null_count / total_rows
 
-            # grab some sample nulls for debugging - super helpfull when you're
-            # trying to figure out why data is missing
             sample_failures = []
             if null_count > 0:
                 sample_query = f"""
@@ -81,8 +72,6 @@ class CompletenessCheck(BaseCheck):
 
             execution_time_ms = int((time.time() - start_time) * 1000)
 
-            # check against threshold - learned the hard way that sometimes
-            # you need to tolerate some nulls (looking at you, optional fields)
             if null_rate > threshold:
                 return CheckResult(
                     check_name=check_name,
@@ -127,7 +116,6 @@ class CompletenessCheck(BaseCheck):
             )
 
         except Exception as e:
-            # don't let one bad check bring down the whole run
             return CheckResult(
                 check_name=check_name,
                 check_type=self.check_type,

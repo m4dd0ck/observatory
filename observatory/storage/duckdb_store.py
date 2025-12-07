@@ -12,9 +12,7 @@ from observatory.models.results import RunResult
 
 
 def json_serializer(obj: Any) -> str:
-    """JSON serializer for objects not serializable by default json code."""
-    # took forever to debug why datetimes weren't serializing
-    # turns out json.dumps doesn't handle them by default (obviously in hindsight)
+    """JSON serializer for objects not serializable by default."""
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
@@ -22,9 +20,6 @@ def json_serializer(obj: Any) -> str:
 
 class DuckDBStore:
     """Stores check results and metrics in DuckDB."""
-
-    # chose duckdb because it's fast, embeddable, and handles json well
-    # great expectations uses a more complex store abstraction but this works for us
 
     def __init__(self, db_path: Path) -> None:
         """Initialize the store.
@@ -37,15 +32,12 @@ class DuckDBStore:
 
     def _get_connection(self) -> duckdb.DuckDBPyConnection:
         """Get a database connection."""
-        # TODO: not sure if we should pool connections or keep creating new ones
-        # seems to work fine for now but might be a bottleneck later
         return duckdb.connect(str(self.db_path))
 
     def _ensure_schema(self) -> None:
         """Create tables if they don't exist."""
         conn = self._get_connection()
 
-        # main table for run-level info
         conn.execute("""
             CREATE TABLE IF NOT EXISTS check_runs (
                 run_id VARCHAR PRIMARY KEY,
@@ -63,7 +55,6 @@ class DuckDBStore:
             )
         """)
 
-        # individual check results - linked to runs via run_id
         conn.execute("""
             CREATE TABLE IF NOT EXISTS check_results (
                 result_id VARCHAR PRIMARY KEY,
@@ -82,8 +73,6 @@ class DuckDBStore:
             )
         """)
 
-        # separate metrics table for trending/charting
-        # denormalized on purpose for query performance
         conn.execute("""
             CREATE TABLE IF NOT EXISTS quality_metrics (
                 metric_id VARCHAR PRIMARY KEY,
@@ -96,7 +85,6 @@ class DuckDBStore:
             )
         """)
 
-        # indexes - these made a huge difference on larger datasets
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_runs_suite_time
             ON check_runs(suite_name, started_at)
@@ -124,7 +112,6 @@ class DuckDBStore:
 
         summary = run_result.summary
 
-        # insert run record first
         conn.execute(
             """
             INSERT INTO check_runs (
@@ -149,8 +136,6 @@ class DuckDBStore:
             ],
         )
 
-        # insert individual check results
-        # not sure if batching these would be faster but this is simple
         for check_result in run_result.check_results:
             result_id = str(uuid4())
             conn.execute(
@@ -177,8 +162,6 @@ class DuckDBStore:
                 ],
             )
 
-            # also store as metric for trending
-            # this is a bit redundant but makes time series queries way easier
             if check_result.metric_value is not None:
                 metric_id = str(uuid4())
                 conn.execute(
@@ -193,7 +176,7 @@ class DuckDBStore:
                         str(run_result.run_id),
                         run_result.suite_name,
                         check_result.check_name,
-                        "check_metric",  # TODO: might want more specific metric names
+                        "check_metric",
                         check_result.metric_value,
                     ],
                 )
@@ -214,8 +197,6 @@ class DuckDBStore:
         """
         conn = self._get_connection()
 
-        # two paths depending on whether we're filtering by suite
-        # not sure this is optimal but it's readable
         if suite_name:
             query = """
                 SELECT * FROM check_runs
@@ -235,7 +216,6 @@ class DuckDBStore:
         columns = [desc[0] for desc in conn.description]
         conn.close()
 
-        # convert to dicts for easier consumption
         return [dict(zip(columns, row)) for row in result]
 
     def get_check_trends(
@@ -255,8 +235,6 @@ class DuckDBStore:
 
         cutoff = datetime.now(UTC) - timedelta(days=days)
 
-        # join to get timestamps from the run table
-        # this is basically what great expectations does for their data docs
         query = """
             SELECT
                 cr.check_name,
@@ -289,7 +267,6 @@ class DuckDBStore:
         """
         conn = self._get_connection()
 
-        # cte makes this cleaner than a subquery imo
         query = """
             WITH latest_run AS (
                 SELECT run_id
@@ -322,8 +299,6 @@ class DuckDBStore:
 
         cutoff = datetime.now(UTC) - timedelta(days=retention_days)
 
-        # get run ids first so we can cascade delete properly
-        # tried using foreign keys but duckdb's support was a bit wonky
         old_runs = conn.execute(
             "SELECT run_id FROM check_runs WHERE started_at < ?", [cutoff]
         ).fetchall()
@@ -335,8 +310,6 @@ class DuckDBStore:
         run_ids = [r[0] for r in old_runs]
         placeholders = ", ".join("?" * len(run_ids))
 
-        # delete in order: results first, then metrics, then runs
-        # TODO: should probably wrap this in a transaction
         conn.execute(f"DELETE FROM check_results WHERE run_id IN ({placeholders})", run_ids)
         conn.execute(f"DELETE FROM quality_metrics WHERE run_id IN ({placeholders})", run_ids)
         conn.execute(f"DELETE FROM check_runs WHERE run_id IN ({placeholders})", run_ids)

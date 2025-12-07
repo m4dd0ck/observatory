@@ -8,19 +8,13 @@ if TYPE_CHECKING:
 
 
 class CheckRegistry:
-    """Registry of available check types.
-
-    basically a fancy dict that maps check_type strings to check classes.
-    could've just used a dict but this gives us nicer error messages.
-    """
+    """Registry of available check types."""
 
     def __init__(self) -> None:
         self._checks: dict[str, type[BaseCheck]] = {}
 
     def register(self, check_class: type["BaseCheck"]) -> type["BaseCheck"]:
         """Register a check class.
-
-        can use this as a decorator too which is pretty slick
 
         Args:
             check_class: The check class to register.
@@ -44,7 +38,6 @@ class CheckRegistry:
             ValueError: If check type is not registered.
         """
         if check_type not in self._checks:
-            # actually helpful error message - future you will thank present you
             available = ", ".join(sorted(self._checks.keys()))
             raise ValueError(
                 f"Unknown check type: '{check_type}'. Available types: {available}"
@@ -56,22 +49,15 @@ class CheckRegistry:
         return sorted(self._checks.keys())
 
 
-# global registry instance - kinda hacky but it works
-# TODO: maybe consider dependency injection someday?
 _default_registry: CheckRegistry | None = None
 
 
 def get_default_registry() -> CheckRegistry:
-    """Get or create the default check registry with all built-in checks.
-
-    lazy initialization here - don't load all check modules until someone
-    actually needs the registry. helps with startup time.
-    """
+    """Get or create the default check registry with all built-in checks."""
     global _default_registry
     if _default_registry is None:
         _default_registry = CheckRegistry()
-        # Import and register all built-in checks
-        # gotta import here to avoid circular import hell
+
         from observatory.checks.completeness import CompletenessCheck
         from observatory.checks.freshness import FreshnessCheck
         from observatory.checks.schema import SchemaCheck
@@ -82,7 +68,6 @@ def get_default_registry() -> CheckRegistry:
             RangeCheck,
         )
 
-        # register em all - order doesn't matter here
         _default_registry.register(SchemaCheck)
         _default_registry.register(CompletenessCheck)
         _default_registry.register(RangeCheck)

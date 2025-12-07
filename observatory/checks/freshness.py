@@ -11,16 +11,7 @@ from observatory.models.results import CheckResult
 
 
 class FreshnessCheck(BaseCheck):
-    """Checks for data freshness based on timestamp columns.
-
-    stale data is often wrong data. this check makes sure your data pipelines
-    are actually running. set max_age_hours based on how often your data
-    should update - daily loads get 36 hours (buffer for weekends), hourly
-    gets maybe 3-4 hours.
-
-    learned the hard way that timezone handling is tricky here. we assume
-    UTC if no timezone is specified.
-    """
+    """Checks data freshness based on timestamp columns."""
 
     check_type = "freshness"
 
@@ -75,10 +66,7 @@ class FreshnessCheck(BaseCheck):
             # calculate age - now minus most recent timestamp
             now = datetime.now(UTC)
 
-            # handle different timestamp formats - duckdb can return strings
-            # or datetime objects depending on the column type
-            # TODO: this is kinda brittle, might need to handle more formats
-            # note to self: look into dateutil.parser
+            # TODO: handle more date formats
             if isinstance(max_timestamp, str):
                 # try parsing ISO format first
                 ts_str = max_timestamp
@@ -88,8 +76,6 @@ class FreshnessCheck(BaseCheck):
                     # fallback to common format
                     max_timestamp = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
 
-            # make timestamp timezone-aware if needed - assume UTC
-            # this has bitten me before when comparing tz-aware and naive datetimes
             if max_timestamp.tzinfo is None:
                 max_timestamp = max_timestamp.replace(tzinfo=UTC)
 
