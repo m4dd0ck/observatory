@@ -10,11 +10,7 @@ from observatory.models.results import CheckResult
 
 
 class RangeCheck(BaseCheck):
-    """Validates that values fall within an expected range.
-
-    great for catching things like negative prices, ages over 200, etc.
-    you'd be surprised how often bad data sneaks in with impossible values.
-    """
+    """Validates values fall within an expected range."""
 
     check_type = "range"
 
@@ -39,8 +35,6 @@ class RangeCheck(BaseCheck):
         check_name = config.get("name", f"range_{column}")
         threshold = config.get("threshold", 0.0)  # max allowed failure rate
 
-        # build condition for out-of-range values
-        # kinda verbose but explicit is better than clever here
         conditions = []
         if min_val is not None:
             conditions.append(f"{column} < {min_val}")
@@ -50,7 +44,6 @@ class RangeCheck(BaseCheck):
         where_clause = " OR ".join(conditions)
 
         try:
-            # duckdb's FILTER syntax is so nice for this stuff
             query = f"""
                 SELECT
                     COUNT(*) as total_rows,
@@ -75,11 +68,9 @@ class RangeCheck(BaseCheck):
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 )
 
-            # exclude nulls from the calculation - they're a completeness issue, not validity
             non_null_rows = total_rows - nulls
             failure_rate = failures / non_null_rows if non_null_rows > 0 else 0
 
-            # get sample failures for debugging
             sample_failures = []
             if failures > 0:
                 sample_query = f"""
@@ -132,12 +123,7 @@ class RangeCheck(BaseCheck):
 
 
 class AllowedValuesCheck(BaseCheck):
-    """Validates that values are within an allowed set.
-
-    perfect for enum-like columns where you know exactly what values are valid.
-    think status fields, country codes, etc. sometimes called categorical check
-    but i think "allowed values" is clearer.
-    """
+    """Validates values are within an allowed set."""
 
     check_type = "allowed_values"
 
@@ -161,8 +147,6 @@ class AllowedValuesCheck(BaseCheck):
         check_name = config.get("name", f"allowed_values_{column}")
         threshold = config.get("threshold", 0.0)
 
-        # build IN clause - gotta handle strings vs numbers differently
-        # TODO: there's probably a cleaner way to do this with parameterized queries
         if all(isinstance(v, (int, float)) for v in allowed_values):
             values_str = ", ".join(str(v) for v in allowed_values)
         else:
@@ -198,8 +182,6 @@ class AllowedValuesCheck(BaseCheck):
             non_null_rows = total_rows - nulls
             failure_rate = failures / non_null_rows if non_null_rows > 0 else 0
 
-            # get sample failures - show the actual bad values and how many times
-            # they appear. super useful for figuring out where the bad data came from
             sample_failures = []
             if failures > 0:
                 sample_query = f"""
@@ -254,13 +236,9 @@ class AllowedValuesCheck(BaseCheck):
 
 
 class CustomSQLCheck(BaseCheck):
-    """Executes a custom SQL query to validate data.
+    """Executes a custom SQL query for validation.
 
-    the escape hatch when the built-in checks don't cut it. you can write
-    any SQL you want - just make sure it returns a count of failures as
-    the first column. learned the hard way that this needs good docs.
-
-    use {table} as a placeholder and we'll swap in the actual table name.
+    Query should return failure count as first column. Use {table} as placeholder.
     """
 
     check_type = "custom_sql"
@@ -282,8 +260,6 @@ class CustomSQLCheck(BaseCheck):
         check_name = config.get("name", "custom_sql_check")
         threshold = config.get("threshold", 0)
 
-        # replace {table} placeholder with actual table name
-        # kinda hacky but keeps the yaml configs clean
         query = query.replace("{table}", table)
 
         try:
@@ -299,14 +275,10 @@ class CustomSQLCheck(BaseCheck):
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 )
 
-            # expect first column to be the failure count
-            # this is the contract - your query needs to follow it
             failures = result[0] if isinstance(result[0], (int, float)) else 0
 
             execution_time_ms = int((time.time() - start_time) * 1000)
 
-            # threshold can be absolute count or rate (if < 1)
-            # this is a bit magical but it's convenient once you get used to it
             if threshold < 1:
                 # get total count for rate comparison
                 total_query = f"SELECT COUNT(*) FROM {table}"
@@ -336,7 +308,6 @@ class CustomSQLCheck(BaseCheck):
             )
 
         except Exception as e:
-            # include the query in error details - you'll want it for debugging
             return CheckResult(
                 check_name=check_name,
                 check_type=self.check_type,

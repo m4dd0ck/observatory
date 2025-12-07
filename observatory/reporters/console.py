@@ -1,8 +1,5 @@
 """Rich console reporter for check results."""
 
-# rich makes terminal output look so much better
-# tables, colors, panels - all the good stuff
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -12,11 +9,7 @@ from observatory.reporters.base import BaseReporter
 
 
 class ConsoleReporter(BaseReporter):
-    """Rich console output for check results.
-
-    this is the default reporter - gives you a nice summary table
-    and details on any failures. verbose mode shows everything.
-    """
+    """Rich console output for check results."""
 
     def __init__(self, verbose: bool = False) -> None:
         """Initialize the reporter.
@@ -29,7 +22,6 @@ class ConsoleReporter(BaseReporter):
 
     def report(self, run_result: RunResult) -> None:
         """Generate and output the report."""
-        # color coding makes it easy to spot problems at a glance
         status_colors = {
             "passed": "green",
             "warning": "yellow",
@@ -38,8 +30,6 @@ class ConsoleReporter(BaseReporter):
         }
         status_color = status_colors.get(run_result.overall_status, "white")
 
-        # Header panel
-        # big bold header so you know what you're looking at
         self.console.print()
         self.console.print(
             Panel(
@@ -49,8 +39,6 @@ class ConsoleReporter(BaseReporter):
             )
         )
 
-        # Summary table
-        # quick overview of pass/fail counts
         summary = run_result.summary
         table = Table(title="Summary", show_header=True, header_style="bold cyan")
         table.add_column("Metric", style="cyan")
@@ -65,8 +53,6 @@ class ConsoleReporter(BaseReporter):
 
         self.console.print(table)
 
-        # Individual check results
-        # only show the full list in verbose mode, otherwise it's too noisy
         if self.verbose:
             self.console.print()
             results_table = Table(title="Check Results", show_header=True)
@@ -76,7 +62,6 @@ class ConsoleReporter(BaseReporter):
             results_table.add_column("Message", style="dim")
 
             for check in run_result.check_results:
-                # using text instead of emojis for terminal compatibility
                 status_emoji = {
                     "passed": "[green]PASS[/green]",
                     "warning": "[yellow]WARN[/yellow]",
@@ -93,14 +78,11 @@ class ConsoleReporter(BaseReporter):
 
             self.console.print(results_table)
 
-        # Failed checks details
-        # always show failures, even in non-verbose mode - that's the important stuff
         failures = [r for r in run_result.check_results if r.status in ("failed", "error")]
         if failures:
             self.console.print()
             self.console.print("[bold red]Failed Checks:[/bold red]")
             for check in failures:
-                # severity helps prioritize what to fix first
                 severity_color = {
                     "critical": "red",
                     "warning": "yellow",
@@ -112,7 +94,6 @@ class ConsoleReporter(BaseReporter):
                     f"{check.check_name}: {check.message}"
                 )
 
-                # sample failures help debug - show actual bad data
                 if self.verbose and check.sample_failures:
                     for sample in check.sample_failures[:3]:
                         self.console.print(f"      [dim]Sample: {sample}[/dim]")

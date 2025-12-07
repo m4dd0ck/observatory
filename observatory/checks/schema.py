@@ -10,15 +10,7 @@ from observatory.models.results import CheckResult
 
 
 class SchemaCheck(BaseCheck):
-    """Validates table schema: column presence, types, and nullability.
-
-    schema drift is a real problem - upstream changes can break your pipelines
-    in subtle ways. this check catches missing columns, type changes, etc.
-    before they cause issues downstream.
-
-    we added flexible type matching
-    because duckdb and other systems don't always agree on type names.
-    """
+    """Validates table schema: column presence, types, and nullability."""
 
     check_type = "schema"
 
@@ -44,10 +36,8 @@ class SchemaCheck(BaseCheck):
         severity = config.get("severity", "warning")
         check_name = config.get("name", "schema_check")
 
-        # get actual schema from table
         try:
-            # handle function-based table references like read_parquet(...)
-            # duckdb is cool like that but DESCRIBE needs SELECT * for it to work
+            # DESCRIBE needs SELECT * for function-based table refs
             if table.startswith("read_"):
                 schema_query = f"DESCRIBE SELECT * FROM {table}"
             else:
@@ -98,12 +88,9 @@ class SchemaCheck(BaseCheck):
 
                 actual = actual_columns[col_name]
 
-                # check dtype if specified
                 if expected_dtype:
                     actual_dtype = actual["dtype"].upper()
                     expected_dtype_upper = expected_dtype.upper()
-                    # flexible type matching - different systems use different names
-                    # for the same types. "INT" vs "INTEGER" vs "INT64" etc.
                     type_matches = (
                         expected_dtype_upper in actual_dtype
                         or actual_dtype in expected_dtype_upper
@@ -121,8 +108,6 @@ class SchemaCheck(BaseCheck):
                             "actual": actual["dtype"],
                         })
 
-                # check nullability if specified
-                # only flag if we expected NOT NULL but got nullable
                 if not expected_nullable and actual["nullable"]:
                     issues.append(
                         f"Column '{col_name}' should not be nullable"
@@ -171,14 +156,7 @@ class SchemaCheck(BaseCheck):
         )
 
     def _types_compatible(self, expected: str, actual: str) -> bool:
-        """Check if types are compatible with common aliases.
-
-        different databases call the same types different things.
-        this handles the most common cases so you don't have to be
-        super precise in your schema definitions.
-        """
-        # group equivalent types together
-        # TODO: this list isn't exhaustive, add more as needed
+        """Check if types are compatible with common aliases."""
         type_groups = [
             {"INT", "INTEGER", "BIGINT", "INT64", "INT32", "SMALLINT", "TINYINT", "HUGEINT"},
             {"FLOAT", "DOUBLE", "REAL", "FLOAT64", "FLOAT32", "DECIMAL", "NUMERIC"},

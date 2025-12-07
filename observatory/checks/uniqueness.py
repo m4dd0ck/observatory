@@ -10,12 +10,7 @@ from observatory.models.results import CheckResult
 
 
 class UniquenessCheck(BaseCheck):
-    """Checks for duplicate values in columns.
-
-    duplicates are sneaky - they can mess up joins, aggregations, everything.
-    this check catches them early. supports both single column and composite
-    uniqueness (like standard data quality checks).
-    """
+    """Checks for duplicate values in specified columns."""
 
     check_type = "uniqueness"
 
@@ -32,8 +27,6 @@ class UniquenessCheck(BaseCheck):
         start_time = time.time()
         self.validate_config(config)
 
-        # support single column or composite uniqueness
-        # nice to have both options
         if "columns" in config:
             columns = config["columns"]
             column_expr = ", ".join(columns)
@@ -48,8 +41,6 @@ class UniquenessCheck(BaseCheck):
         threshold = config.get("threshold", 0.0)  # max allowed duplicate rate
 
         try:
-            # count total rows and distinct values in one query
-            # the WHERE clause filters out nulls - they don't count as duplicates
             query = f"""
                 SELECT
                     COUNT(*) as total_rows,
@@ -74,13 +65,9 @@ class UniquenessCheck(BaseCheck):
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 )
 
-            # duplicates = total rows - distinct values
-            # simple math but easy to mess up if you're not careful
             duplicates = total_rows - distinct_count
             duplicate_rate = duplicates / total_rows if total_rows > 0 else 0
 
-            # get sample duplicates - show which values are duplicated and how many times
-            # the ORDER BY dup_count DESC is key - show the worst offenders first
             sample_failures = []
             if duplicates > 0:
                 sample_query = f"""

@@ -1,8 +1,5 @@
 """Command-line interface for the Data Quality Observatory."""
 
-# typer makes clis so easy - decorators handle all the argparse stuff
-# plus you get nice help text and validation for free
-
 import sys
 from pathlib import Path
 from typing import Annotated
@@ -15,11 +12,10 @@ from observatory.models.config import ObservatorySettings
 from observatory.reporters.console import ConsoleReporter
 from observatory.reporters.json_reporter import JSONReporter
 
-# main cli app - typer does all the heavy lifting
 app = typer.Typer(
     name="observatory",
     help="Data Quality Observatory - Monitor and validate your data quality.",
-    add_completion=False,  # shell completion is nice but adds complexity
+    add_completion=False,
 )
 
 console = Console()
@@ -30,11 +26,9 @@ def get_exit_code(overall_status: str) -> int:
 
     Exit codes:
     - 0: All checks passed
-    - 1: Warnings present (non-critical failures)
-    - 2: Critical failures present
-    - 3: Execution errors
-
-    these codes are useful for ci/cd - you can fail builds on warnings or only on failures
+    - 1: Warnings present
+    - 2: Critical failures
+    - 3: Errors
     """
     if overall_status == "passed":
         return 0
@@ -87,13 +81,9 @@ def run_checks(
         ),
     ] = None,
 ) -> None:
-    """Run data quality checks from a YAML configuration file.
-
-    this is the main command - point it at a yaml file and it'll run all the checks
-    """
+    """Run data quality checks from a YAML configuration file."""
     try:
-        # load settings, override db path if provided
-        # FIXME: should probably validate config file schema before running
+        # FIXME: validate config schema before running
         settings = ObservatorySettings()
         if db:
             settings.results_database = db
@@ -101,8 +91,6 @@ def run_checks(
         obs = Observatory(settings=settings)
         result = obs.run_suite(config)
 
-        # Report results
-        # json if explicitly requested or if writing to file
         if format == "json" or output:
             json_reporter = JSONReporter(output_path=output)
             json_reporter.report(result)
@@ -110,18 +98,14 @@ def run_checks(
             console_reporter = ConsoleReporter(verbose=verbose)
             console_reporter.report(result)
 
-        # Exit with appropriate code
-        # lets ci/cd systems know if checks passed or failed
         sys.exit(get_exit_code(result.overall_status))
 
     except FileNotFoundError as e:
         console.print(f"[red]Error:[/red] {e}")
         sys.exit(3)
     except Exception as e:
-        # catch-all for unexpected errors
         console.print(f"[red]Error:[/red] {e}")
         if verbose:
-            # show full traceback in verbose mode for debugging
             console.print_exception()
         sys.exit(3)
 
@@ -150,11 +134,7 @@ def show_history(
         ),
     ] = None,
 ) -> None:
-    """Show historical check run results.
-
-    see how your data quality has changed over time
-    """
-    # lazy import to speed up cli startup
+    """Show historical check run results."""
     from rich.table import Table
 
     settings = ObservatorySettings()
@@ -168,7 +148,6 @@ def show_history(
         console.print("[yellow]No runs found.[/yellow]")
         return
 
-    # build a nice table showing recent runs
     table = Table(title="Run History", show_header=True)
     table.add_column("Run ID", style="dim", max_width=8)
     table.add_column("Suite", style="cyan")
@@ -178,7 +157,6 @@ def show_history(
     table.add_column("Duration", justify="right")
     table.add_column("Started At", style="dim")
 
-    # color code the status for quick scanning
     status_colors = {
         "passed": "[green]PASS[/green]",
         "warning": "[yellow]WARN[/yellow]",
@@ -202,11 +180,7 @@ def show_history(
 
 @app.command("list-checks")
 def list_check_types() -> None:
-    """List available check types.
-
-    handy reference for what checks you can use in your yaml config
-    """
-    # lazy imports keep cli snappy
+    """List available check types."""
     from rich.table import Table
 
     from observatory.checks.registry import get_default_registry
@@ -252,13 +226,9 @@ def launch_dashboard(
         ),
     ] = 8501,
 ) -> None:
-    """Launch the Streamlit dashboard.
-
-    opens a web ui for exploring results - way nicer than staring at json
-    """
+    """Launch the Streamlit dashboard."""
     import subprocess
 
-    # dashboard lives in a separate directory
     dashboard_path = Path(__file__).parent.parent / "dashboard" / "app.py"
 
     if not dashboard_path.exists():
@@ -270,8 +240,6 @@ def launch_dashboard(
     console.print(f"[green]Launching dashboard on port {port}...[/green]")
     console.print(f"[dim]Database: {db_path}[/dim]")
 
-    # streamlit handles all the web server stuff
-    # the -- separates streamlit args from our app args
     subprocess.run([
         "streamlit", "run", str(dashboard_path),
         "--server.port", str(port),

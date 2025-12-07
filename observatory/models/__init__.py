@@ -1,8 +1,5 @@
 """Pydantic models for configuration and results."""
 
-# inspired by how great expectations organizes their expectations and validation results
-# keeping configs separate from results felt cleaner
-
 from observatory.models.config import (
     CheckConfig,
     CheckSuiteConfig,

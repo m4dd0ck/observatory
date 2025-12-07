@@ -10,11 +10,7 @@ if TYPE_CHECKING:
 
 
 class BaseConnector(ABC):
-    """Abstract base class for data source connectors.
-
-    all connectors return a duckdb connection - we're using duckdb as our
-    query engine for everything. it's fast and handles lots of formats natively.
-    """
+    """Abstract base class for data source connectors."""
 
     @abstractmethod
     def connect(self, config: "SourceConfig") -> duckdb.DuckDBPyConnection:
@@ -26,7 +22,6 @@ class BaseConnector(ABC):
         Returns:
             DuckDB connection with data accessible.
         """
-        # subclasses do the actual work here
         pass
 
     @abstractmethod
@@ -39,6 +34,4 @@ class BaseConnector(ABC):
         Returns:
             Table name or path to use in SQL queries.
         """
-        # this can be a table name, or something like read_parquet('path')
-        # duckdb is flexible like that
         pass
