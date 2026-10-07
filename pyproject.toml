@@ -6,14 +6,20 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "duckdb>=1.4.3",
-    "pandas>=2.3.3",
-    "plotly>=6.5.2",
     "pyarrow>=22.0.0",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.3",
     "rich>=14.2.0",
-    "streamlit>=1.53.0",
     "typer>=0.21.1",
+]
+
+# Reason: the Streamlit dashboard is optional; pipelines that only run checks
+# (sourcewatch, CI jobs) should not have to install Streamlit and Plotly.
+[project.optional-dependencies]
+dashboard = [
+    "pandas>=2.3.3",
+    "plotly>=6.5.2",
+    "streamlit>=1.53.0",
 ]
 
 [project.scripts]
@@ -22,6 +28,7 @@ observatory = "observatory.cli:main"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "pandas>=2.3.3",
     "mypy>=1.19.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",

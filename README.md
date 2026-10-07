@@ -1,6 +1,6 @@
 # Observatory
 
-YAML-configured data quality checks for parquet, CSV, DuckDB and SQLite tables. DuckDB runs the queries, Pydantic validates the config, Typer and Rich make the CLI, Streamlit and Plotly make the dashboard.
+YAML-configured data quality checks for parquet, CSV, DuckDB and SQLite tables. DuckDB runs the queries, Pydantic validates the config, Typer and Rich make the CLI. An optional `dashboard` extra adds a Streamlit and Plotly dashboard over the result history.
 
 ## Why This Exists
 
@@ -13,7 +13,8 @@ Observatory runs checks against your data and tells you when something's wrong. 
 ```bash
 git clone https://github.com/m4dd0ck/observatory.git
 cd observatory
-uv sync
+uv sync                   # checks and CLI
+uv sync --extra dashboard # also the Streamlit dashboard
 
 # see what check types exist
 uv run observatory list-checks
@@ -83,7 +84,6 @@ Each check takes `severity: info | warning | critical` (default `warning`) and `
 | `schema` | `columns` (list of `name`, `dtype`, `nullable`, or plain names) | Checks columns exist, and when `dtype` is given that the DuckDB type matches. Type matching is lenient: `INTEGER` accepts `BIGINT`, `VARCHAR` accepts `TEXT` |
 | `custom_sql` | `query`, `threshold` | Runs your query with `{table}` substituted; the first column is the failure count. `threshold` below 1 is a rate, 1 or more is an absolute count |
 
-## Example Output
 ### custom_sql
 
 Write any SQL that returns the number of bad rows in its first column. `{table}` is replaced with the source's table expression (for a parquet file that is `read_parquet('path')`), so you can query the source without knowing how it was loaded.
@@ -105,6 +105,7 @@ Write any SQL that returns the number of bad rows in its first column. `{table}`
 
 Pass/fail: with `threshold` below 1 (the default is 0) the count is divided by `SELECT COUNT(*) FROM {table}` and compared as a rate. With `threshold` of 1 or more the count itself must not exceed it. A query that returns no rows is an `error`; a first column that is not numeric counts as 0 failures. The full runnable version is `examples/custom_sql/checks.yaml`.
 
+## Example Output
 
 ```
 $ uv run observatory check checks.yaml
@@ -151,7 +152,7 @@ $ uv run observatory history --db results.db --suite sales_quality --limit 1
 
 ## Dashboard
 
-A Streamlit app with overview, trends, failures and coverage pages over the same database:
+A Streamlit app with overview, trends, failures and coverage pages over the same database. It needs the optional extra (`uv sync --extra dashboard`); without it the command prints an error and exits.
 
 ```bash
 uv run observatory dashboard --db results.db --port 8501
@@ -217,13 +218,17 @@ observatory/
 └── main.py          # Observatory class: load config, run checks, save results
 
 dashboard/
-└── app.py           # Streamlit dashboard
+└── app.py           # Streamlit dashboard (optional `dashboard` extra)
+
+examples/
+├── custom_sql/      # offline example: checks.yaml + orders.csv
+└── nyc_taxi/        # checks.yaml for the NYC TLC parquet (download separately)
 ```
 
 ## Development
 
 ```bash
-uv sync --dev
+uv sync --all-extras --dev
 uv run ruff check
 uv run mypy observatory/
 uv run pytest
