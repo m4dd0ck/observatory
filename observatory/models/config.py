@@ -65,6 +65,5 @@ class ObservatorySettings(BaseModel):
 
     results_database: Path = Path("observatory.db")
     log_level: str = "INFO"
-    parallel_checks: bool = False  # TODO: implement
     sample_failure_limit: int = 5
     retention_days: int = 90
