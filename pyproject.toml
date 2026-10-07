@@ -58,3 +58,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["observatory*"]
+
+[tool.setuptools.package-data]
+observatory = ["py.typed"]
