@@ -1,7 +1,7 @@
 [project]
 name = "observatory"
 version = "0.1.0"
-description = "A production-grade data quality and observability framework"
+description = "YAML-configured data quality checks run through DuckDB, with result history and a dashboard"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
