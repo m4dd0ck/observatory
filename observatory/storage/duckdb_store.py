@@ -1,20 +1,33 @@
 """DuckDB storage for check results."""
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import duckdb
 
 from observatory.models.results import RunResult
 
 
-def json_serializer(obj: Any) -> str:
-    """JSON serializer for objects not serializable by default."""
-    if isinstance(obj, datetime):
+def json_serializer(obj: Any) -> str | float:
+    """JSON serializer for the value types DuckDB hands back that json cannot encode.
+
+    Sample failures carry raw column values, so dates, times, decimals, UUIDs and bytes all
+    show up here, not only datetimes.
+    """
+    if isinstance(obj, datetime | date | time):
         return obj.isoformat()
+    if isinstance(obj, timedelta):
+        return obj.total_seconds()
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, UUID):
+        return str(obj)
+    if isinstance(obj, bytes):
+        return obj.hex()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
@@ -183,9 +196,7 @@ class DuckDBStore:
 
         conn.close()
 
-    def get_runs(
-        self, suite_name: str | None = None, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def get_runs(self, suite_name: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         """Get historical run results.
 
         Args:
