@@ -195,12 +195,12 @@ def list_check_types() -> None:
     # TODO: pull these descriptions from the check classes themselves
     descriptions = {
         "schema": "Validates table schema: column presence, types, nullability",
-        "completeness": "Checks for null rates and missing value patterns",
-        "range": "Validates values fall within expected numeric range",
-        "allowed_values": "Validates values are within an allowed set",
-        "custom_sql": "Executes custom SQL query for validation",
-        "uniqueness": "Checks for duplicate values in columns",
-        "freshness": "Checks data freshness based on timestamp columns",
+        "completeness": "Fails if a column's null rate is above threshold",
+        "range": "Fails if the share of values below min or above max is above threshold",
+        "allowed_values": "Fails if the share of values outside the allowed set is above threshold",
+        "custom_sql": "Runs your SQL with {table} substituted; first column is the failure count",
+        "uniqueness": "Fails if the duplicate rate for a column or key is above threshold",
+        "freshness": "Fails if MAX(column) is older than max_age_hours",
     }
 
     for check_type in check_types:
