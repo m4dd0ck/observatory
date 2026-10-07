@@ -24,7 +24,10 @@ uv run observatory check checks.yaml
 
 Every run is saved to `observatory.db` in the current directory. Pass `--db path.db` to put it somewhere else.
 
-The bundled example at `examples/nyc_taxi/checks.yaml` expects `data/yellow_tripdata_2024-01.parquet`, which is not in the repo. Download the January 2024 Yellow Taxi file from the NYC TLC trip record page into `data/` before running it.
+Two examples ship with the repo:
+
+- `examples/custom_sql/checks.yaml` runs offline against the eight-row `examples/custom_sql/orders.csv` next to it. Run it from the repo root: `uv run observatory check examples/custom_sql/checks.yaml`. One check fails on purpose.
+- `examples/nyc_taxi/checks.yaml` expects `data/yellow_tripdata_2024-01.parquet`, which is not in the repo. Download the January 2024 Yellow Taxi file from the NYC TLC trip record page into `data/` before running it.
 
 ## Example Config
 
@@ -64,9 +67,9 @@ checks:
     max_age_hours: 48
 ```
 
-`source.type` is one of `csv`, `parquet`, `duckdb`, `sqlite`. File sources take `path`; `duckdb` and `sqlite` take `path` plus `table`, or a `query` to check a subquery instead of a whole table.
+`source.type` is one of `csv`, `parquet`, `duckdb`, `sqlite`. File sources take `path`; `duckdb` and `sqlite` take `path` (or `connection_string` for `duckdb`) plus `table`, or a `query` to check a subquery instead of a whole table. Relative paths resolve against the directory you run from.
 
-Each check takes `severity: info | warning | critical` (default `warning`) and `enabled: true | false`. `threshold` is the maximum failure rate the check tolerates, as a fraction of rows, and defaults to 0.
+Each check takes `severity: info | warning | critical` (default `warning`) and `enabled: true | false`. `threshold` is the maximum failure rate the check tolerates and defaults to 0. It is a fraction of all rows for `completeness`, and of non-null rows for `range`, `allowed_values` and `uniqueness`; `custom_sql` is the exception, see below.
 
 ## Check Types
 
@@ -74,13 +77,34 @@ Each check takes `severity: info | warning | critical` (default `warning`) and `
 |------|-------------|--------------|
 | `completeness` | `column`, `threshold` | Fails if the null rate is above `threshold` |
 | `uniqueness` | `columns` (or `column`), `threshold` | Fails if the duplicate rate for the key is above `threshold` |
-| `freshness` | `column`, `max_age_hours` | Fails if `MAX(column)` is older than `max_age_hours` |
+| `freshness` | `column` (or `timestamp_column`), `max_age_hours` | Fails if `MAX(column)` is older than `max_age_hours`, measured against the current UTC time |
 | `range` | `column`, `min` and/or `max`, `threshold` | Fails if the share of out-of-range values is above `threshold` |
 | `allowed_values` | `column`, `allowed_values`, `threshold` | Fails if the share of values outside the set is above `threshold` |
-| `schema` | `columns` (list of `name`, `dtype`, `nullable`) | Checks columns exist with the expected DuckDB types |
+| `schema` | `columns` (list of `name`, `dtype`, `nullable`, or plain names) | Checks columns exist, and when `dtype` is given that the DuckDB type matches. Type matching is lenient: `INTEGER` accepts `BIGINT`, `VARCHAR` accepts `TEXT` |
 | `custom_sql` | `query`, `threshold` | Runs your query with `{table}` substituted; the first column is the failure count. `threshold` below 1 is a rate, 1 or more is an absolute count |
 
 ## Example Output
+### custom_sql
+
+Write any SQL that returns the number of bad rows in its first column. `{table}` is replaced with the source's table expression (for a parquet file that is `read_parquet('path')`), so you can query the source without knowing how it was loaded.
+
+```yaml
+  - name: ship_date_not_before_order_date
+    type: custom_sql
+    query: |
+      SELECT COUNT(*) FROM {table}
+      WHERE ship_date < order_date
+
+  - name: refunds_under_20_percent
+    type: custom_sql
+    threshold: 0.2
+    query: |
+      SELECT COUNT(*) FROM {table}
+      WHERE status = 'refunded'
+```
+
+Pass/fail: with `threshold` below 1 (the default is 0) the count is divided by `SELECT COUNT(*) FROM {table}` and compared as a rate. With `threshold` of 1 or more the count itself must not exceed it. A query that returns no rows is an `error`; a first column that is not numeric counts as 0 failures. The full runnable version is `examples/custom_sql/checks.yaml`.
+
 
 ```
 $ uv run observatory check checks.yaml
@@ -105,9 +129,9 @@ Failed Checks:
   x [WARNING] unique_order_ids: Found 120 duplicate rows (1.19%) for '(order_id)'
 ```
 
-`--verbose` adds a per-check table and up to three sample failing rows per check. `--format json` prints the full result as JSON; `--output results.json` writes it to a file instead.
+`--verbose` adds a per-check table and up to three sample failing rows per check. `--format json` prints the full result as JSON; `--output results.json` writes it to a file instead (and implies JSON).
 
-The exit code tells CI what happened: `0` all passed, `1` a non-critical check failed, `2` a critical check failed, `3` a check errored or the config could not be loaded.
+The exit code tells CI what happened: `0` all passed, `1` a non-critical check failed, `2` a critical check failed, `3` a check errored or the config was invalid. A config path that does not exist is a usage error and exits `2` before any check runs.
 
 ## Run History
 
@@ -133,7 +157,7 @@ A Streamlit app with overview, trends, failures and coverage pages over the same
 uv run observatory dashboard --db results.db --port 8501
 ```
 
-That shells out to `streamlit run dashboard/app.py -- --db results.db`, which also works directly.
+That shells out to `streamlit run dashboard/app.py --server.port 8501 -- --db results.db`, which also works directly.
 
 ## CLI Commands
 
@@ -159,7 +183,26 @@ for check in result.check_results:
         print(f"  {check.message}")
 ```
 
-`Observatory.run(CheckSuiteConfig)` takes a config object instead of a path if you build suites in code.
+### Embedding observatory in Python
+
+`Observatory.run(CheckSuiteConfig)` takes a config object instead of a path. This is how sourcewatch, a status page for public datasets, runs value checks over each probe's sample: build the suite in code, point the source at a parquet file, and translate the `CheckResult`s into its own outcomes.
+
+```python
+from pathlib import Path
+
+from observatory import CheckConfig, CheckSuiteConfig, Observatory, SourceConfig
+
+suite = CheckSuiteConfig(
+    name="usgs-earthquakes-sample",
+    source=SourceConfig(type="parquet", path=Path("sample.parquet")),
+    checks=[CheckConfig(name="plausible_magnitude", type="range", column="mag", min=-2, max=10)],
+)
+result = Observatory(results_db=Path("observatory.db")).run(suite)
+for r in result.check_results:
+    print(r.check_name, r.status, r.metric_value, r.threshold, r.sample_failures[:3])
+```
+
+Every run is written to `results_db` (its directory must already exist), so point it at a scratch location if you keep your own history. `CheckConfig(**d)` accepts the same keys as a YAML check entry.
 
 ## Project Structure
 
