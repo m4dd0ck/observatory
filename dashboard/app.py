@@ -181,7 +181,9 @@ def render_trends(conn):
 
     # Suite selector
     try:
-        suites = conn.execute("SELECT DISTINCT suite_name FROM check_runs ORDER BY suite_name").fetchall()
+        suites = conn.execute(
+            "SELECT DISTINCT suite_name FROM check_runs ORDER BY suite_name"
+        ).fetchall()
         suite_names = [s[0] for s in suites]
     except Exception:
         suite_names = []
