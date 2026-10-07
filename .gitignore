@@ -25,6 +25,8 @@ htmlcov/
 # Data files (keep examples)
 *.parquet
 *.csv
+!examples/**/*.parquet
+!examples/**/*.csv
 data/
 !data/.gitkeep
 

@@ -1,0 +1,47 @@
+# custom_sql example
+#
+# Runs offline against examples/custom_sql/orders.csv (8 rows, written with a
+# DuckDB COPY ... TO statement). One row, order 1004, ships before it was
+# ordered, so the first check fails on purpose to show what a failure looks like.
+#
+#   uv run observatory check examples/custom_sql/checks.yaml
+
+name: orders_custom_sql
+description: custom_sql checks over a small orders table
+
+source:
+  type: csv
+  path: examples/custom_sql/orders.csv
+
+checks:
+  # The query's first column is the failure count. {table} is replaced with the
+  # source's table expression. threshold defaults to 0, so any failure fails.
+  - name: ship_date_not_before_order_date
+    type: custom_sql
+    severity: warning
+    query: |
+      SELECT COUNT(*) FROM {table}
+      WHERE ship_date < order_date
+
+  - name: shipped_orders_have_ship_date
+    type: custom_sql
+    severity: critical
+    query: |
+      SELECT COUNT(*) FROM {table}
+      WHERE status = 'shipped' AND ship_date IS NULL
+
+  # threshold below 1 is a rate: failures / COUNT(*) of the table.
+  - name: refunds_under_20_percent
+    type: custom_sql
+    threshold: 0.2
+    query: |
+      SELECT COUNT(*) FROM {table}
+      WHERE status = 'refunded'
+
+  # threshold of 1 or more is an absolute count.
+  - name: at_most_two_large_orders
+    type: custom_sql
+    threshold: 2
+    query: |
+      SELECT COUNT(*) FROM {table}
+      WHERE amount > 1000
