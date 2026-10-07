@@ -167,7 +167,7 @@ def render_overview(conn):
                 title="Health Score Over Time",
                 labels={"health_score": "Health Score", "day": "Date", "suite_name": "Suite"},
             )
-            fig.update_yaxis(range=[0, 1.1])
+            fig.update_yaxes(range=[0, 1.1])
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Not enough data for health visualization.")
@@ -234,7 +234,7 @@ def render_trends(conn):
             labels={"pass_rate": "Pass Rate (%)", "started_at": "Time"},
         )
         fig.add_hline(y=95, line_dash="dash", line_color="green", annotation_text="95% Target")
-        fig.update_yaxis(range=[0, 105])
+        fig.update_yaxes(range=[0, 105])
         st.plotly_chart(fig, use_container_width=True)
 
         # Check breakdown
