@@ -629,20 +629,25 @@ version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
-    { name = "pandas" },
-    { name = "plotly" },
     { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "rich" },
-    { name = "streamlit" },
     { name = "typer" },
+]
+
+[package.optional-dependencies]
+dashboard = [
+    { name = "pandas" },
+    { name = "plotly" },
+    { name = "streamlit" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "httpx" },
     { name = "mypy" },
+    { name = "pandas" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -652,20 +657,22 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb", specifier = ">=1.4.3" },
-    { name = "pandas", specifier = ">=2.3.3" },
-    { name = "plotly", specifier = ">=6.5.2" },
+    { name = "pandas", marker = "extra == 'dashboard'", specifier = ">=2.3.3" },
+    { name = "plotly", marker = "extra == 'dashboard'", specifier = ">=6.5.2" },
     { name = "pyarrow", specifier = ">=22.0.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=14.2.0" },
-    { name = "streamlit", specifier = ">=1.53.0" },
+    { name = "streamlit", marker = "extra == 'dashboard'", specifier = ">=1.53.0" },
     { name = "typer", specifier = ">=0.21.1" },
 ]
+provides-extras = ["dashboard"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mypy", specifier = ">=1.19.1" },
+    { name = "pandas", specifier = ">=2.3.3" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "ruff", specifier = ">=0.14.13" },

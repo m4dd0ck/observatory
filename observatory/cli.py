@@ -227,7 +227,15 @@ def launch_dashboard(
     ] = 8501,
 ) -> None:
     """Launch the Streamlit dashboard."""
+    import importlib.util
     import subprocess
+
+    if importlib.util.find_spec("streamlit") is None:
+        console.print(
+            "[red]Error:[/red] Streamlit is not installed. "
+            "The dashboard is an optional extra: run [bold]uv sync --extra dashboard[/bold]."
+        )
+        sys.exit(1)
 
     dashboard_path = Path(__file__).parent.parent / "dashboard" / "app.py"
 
