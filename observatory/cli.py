@@ -86,7 +86,6 @@ def run_checks(
 ) -> None:
     """Run data quality checks from a YAML configuration file."""
     try:
-        # FIXME: validate config schema before running
         settings = ObservatorySettings()
         if db:
             settings.results_database = db

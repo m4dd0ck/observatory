@@ -5,27 +5,36 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v10.3.0
 
       - name: Set up Python
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: uv sync --locked --all-extras
 
-      - name: Run linter
-        run: uv run ruff check observatory/ tests/
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy observatory/
 
-      - name: Run type checker
-        run: uv run mypy observatory/ --ignore-missing-imports
+      - name: Tests
+        run: uv run pytest
 
-      - name: Run tests
-        run: uv run pytest tests/ -v --tb=short
+      - name: Wheel ships the dashboard
+        run: |
+          uv build --wheel
+          uv run python -c "import glob, zipfile; names = zipfile.ZipFile(glob.glob('dist/*.whl')[0]).namelist(); assert 'observatory/dashboard/app.py' in names, names"
