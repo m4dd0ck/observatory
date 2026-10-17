@@ -38,10 +38,7 @@ class RunResult(BaseModel):
         """Determine overall status based on check results."""
         if any(r.status == "error" for r in self.check_results):
             return "error"
-        if any(
-            r.status == "failed" and r.severity == "critical"
-            for r in self.check_results
-        ):
+        if any(r.status == "failed" and r.severity == "critical" for r in self.check_results):
             return "failed"
         if any(r.status == "failed" for r in self.check_results):
             return "warning"

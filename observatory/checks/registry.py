@@ -39,9 +39,7 @@ class CheckRegistry:
         """
         if check_type not in self._checks:
             available = ", ".join(sorted(self._checks.keys()))
-            raise ValueError(
-                f"Unknown check type: '{check_type}'. Available types: {available}"
-            )
+            raise ValueError(f"Unknown check type: '{check_type}'. Available types: {available}")
         return self._checks[check_type]
 
     def list_types(self) -> list[str]:

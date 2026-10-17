@@ -208,7 +208,8 @@ def render_trends(conn):
         import plotly.graph_objects as go
 
         # Pass rate trend
-        trend_data = conn.execute(f"""
+        trend_data = conn.execute(
+            f"""
             SELECT
                 started_at,
                 passed_checks,
@@ -220,7 +221,9 @@ def render_trends(conn):
             WHERE suite_name = ?
               AND started_at > NOW() - INTERVAL '{interval_map[time_range]}'
             ORDER BY started_at
-        """, [selected_suite]).df()
+        """,
+            [selected_suite],
+        ).df()
 
         if trend_data.empty:
             st.info(f"No data for {selected_suite} in the selected time range.")
@@ -242,20 +245,24 @@ def render_trends(conn):
         # Check breakdown
         st.subheader("Check Results Breakdown")
         fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(
-            x=trend_data["started_at"],
-            y=trend_data["passed_checks"],
-            name="Passed",
-            fill="tozeroy",
-            line=dict(color="green"),
-        ))
-        fig2.add_trace(go.Scatter(
-            x=trend_data["started_at"],
-            y=trend_data["failed_checks"],
-            name="Failed",
-            fill="tozeroy",
-            line=dict(color="red"),
-        ))
+        fig2.add_trace(
+            go.Scatter(
+                x=trend_data["started_at"],
+                y=trend_data["passed_checks"],
+                name="Passed",
+                fill="tozeroy",
+                line=dict(color="green"),
+            )
+        )
+        fig2.add_trace(
+            go.Scatter(
+                x=trend_data["started_at"],
+                y=trend_data["failed_checks"],
+                name="Failed",
+                fill="tozeroy",
+                line=dict(color="red"),
+            )
+        )
         fig2.update_layout(title="Check Results Over Time", xaxis_title="Time", yaxis_title="Count")
         st.plotly_chart(fig2, use_container_width=True)
 

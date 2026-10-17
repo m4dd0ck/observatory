@@ -1,6 +1,5 @@
 """Integration tests for full check suite execution."""
 
-
 import pytest
 
 from observatory import Observatory
@@ -24,15 +23,11 @@ class TestFullSuite:
         results = obs.run_suite(sample_config)
 
         # Should fail on negative value
-        value_check = next(
-            r for r in results.check_results if r.check_name == "positive_values"
-        )
+        value_check = next(r for r in results.check_results if r.check_name == "positive_values")
         assert value_check.status == "failed"
 
         # Should fail on invalid category
-        cat_check = next(
-            r for r in results.check_results if r.check_name == "valid_categories"
-        )
+        cat_check = next(r for r in results.check_results if r.check_name == "valid_categories")
         assert cat_check.status == "failed"
 
     def test_persists_results(self, sample_config, temp_dir):
@@ -79,10 +74,12 @@ class TestFullSuite:
         import pandas as pd
 
         # Create test data with various issues
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "value": [10, 20, -5],  # One negative
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "value": [10, 20, -5],  # One negative
+            }
+        )
         path = temp_dir / "test.parquet"
         df.to_parquet(path)
 

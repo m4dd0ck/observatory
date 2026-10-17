@@ -55,8 +55,7 @@ class SchemaCheck(BaseCheck):
 
         # build lookup of actual columns for easy checking
         actual_columns = {
-            row[0]: {"dtype": row[1], "nullable": row[2] == "YES"}
-            for row in actual_schema
+            row[0]: {"dtype": row[1], "nullable": row[2] == "YES"} for row in actual_schema
         }
 
         issues = []
@@ -101,23 +100,25 @@ class SchemaCheck(BaseCheck):
                             f"Column '{col_name}' type mismatch: "
                             f"expected {expected_dtype}, got {actual['dtype']}"
                         )
-                        sample_failures.append({
-                            "issue": "type_mismatch",
-                            "column": col_name,
-                            "expected": expected_dtype,
-                            "actual": actual["dtype"],
-                        })
+                        sample_failures.append(
+                            {
+                                "issue": "type_mismatch",
+                                "column": col_name,
+                                "expected": expected_dtype,
+                                "actual": actual["dtype"],
+                            }
+                        )
 
                 if not expected_nullable and actual["nullable"]:
-                    issues.append(
-                        f"Column '{col_name}' should not be nullable"
+                    issues.append(f"Column '{col_name}' should not be nullable")
+                    sample_failures.append(
+                        {
+                            "issue": "nullable_mismatch",
+                            "column": col_name,
+                            "expected_nullable": str(expected_nullable),
+                            "actual_nullable": str(actual["nullable"]),
+                        }
                     )
-                    sample_failures.append({
-                        "issue": "nullable_mismatch",
-                        "column": col_name,
-                        "expected_nullable": str(expected_nullable),
-                        "actual_nullable": str(actual["nullable"]),
-                    })
 
         execution_time_ms = int((time.time() - start_time) * 1000)
 
@@ -129,8 +130,7 @@ class SchemaCheck(BaseCheck):
                 severity=severity,
                 metric_value=len(issues),
                 message=(
-                    f"Schema validation failed with {len(issues)} issue(s): "
-                    f"{'; '.join(issues[:3])}"
+                    f"Schema validation failed with {len(issues)} issue(s): {'; '.join(issues[:3])}"
                 ),
                 details={
                     "issues": issues,

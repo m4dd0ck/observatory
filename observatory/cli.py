@@ -55,21 +55,24 @@ def run_checks(
     output: Annotated[
         Path | None,
         typer.Option(
-            "--output", "-o",
+            "--output",
+            "-o",
             help="Path to write JSON output",
         ),
     ] = None,
     format: Annotated[
         str,
         typer.Option(
-            "--format", "-f",
+            "--format",
+            "-f",
             help="Output format: console, json",
         ),
     ] = "console",
     verbose: Annotated[
         bool,
         typer.Option(
-            "--verbose", "-v",
+            "--verbose",
+            "-v",
             help="Show detailed output",
         ),
     ] = False,
@@ -115,14 +118,16 @@ def show_history(
     suite: Annotated[
         str | None,
         typer.Option(
-            "--suite", "-s",
+            "--suite",
+            "-s",
             help="Filter by suite name",
         ),
     ] = None,
     limit: Annotated[
         int,
         typer.Option(
-            "--limit", "-n",
+            "--limit",
+            "-n",
             help="Number of runs to show",
         ),
     ] = 10,
@@ -221,7 +226,8 @@ def launch_dashboard(
     port: Annotated[
         int,
         typer.Option(
-            "--port", "-p",
+            "--port",
+            "-p",
             help="Port to run dashboard on",
         ),
     ] = 8501,
@@ -248,12 +254,18 @@ def launch_dashboard(
     console.print(f"[green]Launching dashboard on port {port}...[/green]")
     console.print(f"[dim]Database: {db_path}[/dim]")
 
-    subprocess.run([
-        "streamlit", "run", str(dashboard_path),
-        "--server.port", str(port),
-        "--",
-        "--db", db_path,
-    ])
+    subprocess.run(
+        [
+            "streamlit",
+            "run",
+            str(dashboard_path),
+            "--server.port",
+            str(port),
+            "--",
+            "--db",
+            db_path,
+        ]
+    )
 
 
 def main() -> None:

@@ -57,11 +57,13 @@ def sample_parquet(temp_dir):
     """Create a sample parquet file for testing."""
     import pandas as pd
 
-    df = pd.DataFrame({
-        "id": [1, 2, 3, 4, 5],
-        "value": [10.0, -5.0, 30.0, None, 200.0],
-        "category": ["A", "B", "A", "C", "INVALID"],
-    })
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "value": [10.0, -5.0, 30.0, None, 200.0],
+            "category": ["A", "B", "A", "C", "INVALID"],
+        }
+    )
 
     path = temp_dir / "test.parquet"
     df.to_parquet(path)

@@ -192,9 +192,7 @@ class AllowedValuesCheck(BaseCheck):
                     LIMIT 5
                 """
                 samples = conn.execute(sample_query).fetchall()
-                sample_failures = [
-                    {"invalid_value": row[0], "count": row[1]} for row in samples
-                ]
+                sample_failures = [{"invalid_value": row[0], "count": row[1]} for row in samples]
 
             execution_time_ms = int((time.time() - start_time) * 1000)
 
@@ -208,8 +206,7 @@ class AllowedValuesCheck(BaseCheck):
                 metric_value=failures,
                 threshold=int(threshold * non_null_rows) if non_null_rows > 0 else 0,
                 message=(
-                    f"Found {failures:,} rows ({failure_rate:.2%}) "
-                    "with values not in allowed set"
+                    f"Found {failures:,} rows ({failure_rate:.2%}) with values not in allowed set"
                 ),
                 details={
                     "column": column,
