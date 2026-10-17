@@ -243,7 +243,9 @@ def launch_dashboard(
         )
         sys.exit(1)
 
-    dashboard_path = Path(__file__).parent.parent / "dashboard" / "app.py"
+    # Reason: the app ships inside the package so an installed wheel can find it;
+    # the old ../dashboard/app.py path only existed in a source checkout
+    dashboard_path = Path(__file__).parent / "dashboard" / "app.py"
 
     if not dashboard_path.exists():
         console.print(f"[red]Error:[/red] Dashboard not found at {dashboard_path}")
@@ -254,8 +256,12 @@ def launch_dashboard(
     console.print(f"[green]Launching dashboard on port {port}...[/green]")
     console.print(f"[dim]Database: {db_path}[/dim]")
 
-    subprocess.run(
+    # Reason: `python -m streamlit` uses the interpreter that has streamlit installed,
+    # whereas a bare `streamlit` relies on the console script being on PATH
+    completed = subprocess.run(
         [
+            sys.executable,
+            "-m",
             "streamlit",
             "run",
             str(dashboard_path),
@@ -264,8 +270,10 @@ def launch_dashboard(
             "--",
             "--db",
             db_path,
-        ]
+        ],
+        check=False,
     )
+    raise typer.Exit(completed.returncode)
 
 
 def main() -> None:

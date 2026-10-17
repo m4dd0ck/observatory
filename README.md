@@ -158,7 +158,7 @@ A Streamlit app with overview, trends, failures and coverage pages over the same
 uv run observatory dashboard --db results.db --port 8501
 ```
 
-That shells out to `streamlit run dashboard/app.py --server.port 8501 -- --db results.db`, which also works directly.
+That shells out to `python -m streamlit run observatory/dashboard/app.py --server.port 8501 -- --db results.db`, which also works directly. The app ships inside the package, so the command works from an installed wheel as well as a checkout.
 
 ## CLI Commands
 
@@ -211,14 +211,12 @@ Every run is written to `results_db` (its directory must already exist), so poin
 observatory/
 ├── checks/          # one module per check type, plus the registry
 ├── connectors/      # source -> DuckDB table expression
+├── dashboard/       # Streamlit app (optional `dashboard` extra)
 ├── models/          # Pydantic config and result models
 ├── reporters/       # console (Rich) and JSON output
 ├── storage/         # DuckDB result store
 ├── cli.py           # Typer commands
 └── main.py          # Observatory class: load config, run checks, save results
-
-dashboard/
-└── app.py           # Streamlit dashboard (optional `dashboard` extra)
 
 examples/
 ├── custom_sql/      # offline example: checks.yaml + orders.csv
