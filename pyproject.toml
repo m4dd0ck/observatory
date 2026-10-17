@@ -27,7 +27,6 @@ observatory = "observatory.cli:main"
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pandas>=2.3.3",
     "mypy>=1.19.1",
     "pytest>=9.0.2",
