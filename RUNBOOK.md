@@ -27,17 +27,15 @@ uv run pytest -q
 
 ## Release
 
-Conventions in `~/developer/hq/CONVENTIONS.md` §Versioning.
-
 1. Bump `version` in `pyproject.toml` and `__version__` in `observatory/__init__.py` to the same value; `uv lock`.
 2. Commit `chore: Release vX.Y.Z`, then `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push origin main --tags`.
 3. `gh release create vX.Y.Z --title "observatory vX.Y.Z" --notes "<what changed>"`; include the compare link to the previous tag and mark it latest.
 4. CI must be green on the tagged commit (lint, types, tests, the wheel-contents check).
-5. sourcewatch pins this package by tag: bump the pin in its `pyproject.toml`, `uv lock` there, and run its tests. The tag in force is recorded in hq (`~/developer/hq/repos.json`).
+5. sourcewatch pins this package by tag: bump the pin in its `pyproject.toml`, `uv lock` there, and run its tests.
 
 ## Restore on a new machine
 
-1. Clone `git@github.com:m4dd0ck/observatory.git`; `uv sync --all-extras --dev`.
+1. Clone `https://github.com/m4dd0ck/observatory.git`; `uv sync --all-extras --dev`.
 2. Nothing else: no secrets, no data. The `nyc_taxi` example needs the TLC parquet downloaded into `data/` (README §Quick start).
 
 ## Validate
@@ -47,5 +45,4 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy observatory/
 uv run pytest
 uv build --wheel
-python3 ~/.claude/scripts/doc-check.py --repo .
 ```

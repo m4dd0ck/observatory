@@ -26,16 +26,15 @@ uv sync --extra dashboard # also the Streamlit dashboard
 # see what check types exist
 uv run observatory list-checks
 
-# run a suite (config format below)
-uv run observatory check checks.yaml
+# run the shipped example suite; one check fails on purpose, so it exits 1
+uv run observatory check examples/custom_sql/checks.yaml
 ```
 
 Every run is saved to `observatory.db` in the current directory. Pass `--db path.db` to put it somewhere else.
 
-Two examples ship with the repo:
-
-- `examples/custom_sql/checks.yaml` runs offline against the eight-row `examples/custom_sql/orders.csv` next to it. Run it from the repo root: `uv run observatory check examples/custom_sql/checks.yaml`. One check fails on purpose.
-- `examples/nyc_taxi/checks.yaml` expects `data/yellow_tripdata_2024-01.parquet`, which is not in the repo. Download the January 2024 Yellow Taxi file from the NYC TLC trip record page into `data/` before running it.
+The example suite runs offline against the eight-row `examples/custom_sql/orders.csv` next to it.
+Your own suite is one YAML file (format under How it works). `examples/nyc_taxi/checks.yaml` needs
+the January 2024 Yellow Taxi parquet from the NYC TLC trip record page downloaded into `data/`.
 
 ## Commands
 
@@ -298,4 +297,3 @@ The full list is `RUNBOOK.md` §Validate. Tests under `tests/unit/` cover each c
 - `RUNBOOK.md`: on open, on close, release, restore.
 - `CLAUDE.md`: rules for agents working here.
 - `TASK.md`: the roadmap and anything open.
-- `~/developer/hq/CONVENTIONS.md`: release and commit conventions across the owner's repos.
